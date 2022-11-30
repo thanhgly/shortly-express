@@ -100,7 +100,6 @@ app.post('/login', (req, res) => {
     //compare password
   models.Users.get({username: req.body.username})
     .then((userData) => {
-      console.log(userData, ' USER DATA');
       if (userData !== undefined) {
         return models.Users.compare(req.body.password, userData.password, userData.salt);
       }
