@@ -5,6 +5,8 @@ module.exports.createSession = (req, res, next) => {
   //access parsed cookie on
   if (req.cookies === {} ) {
     var session = undefined;
+  } else {
+    var session = req.cookies.shortlyid;
   }
 
 
@@ -19,14 +21,19 @@ module.exports.createSession = (req, res, next) => {
             return models.Sessions.getAll();
           })
           .then((result) => {
-            var hashValue = result[result.length-1].hash;
+            var hashValue = result[result.length - 1].hash;
             req.session = {hash: hashValue };
-            console.log('response cookie', res.cookies);
-            res.cookies.shortlyid.value = hashValue;
+            res.cookie('shortlyid', hashValue);
             next();
-            // req.session.hash = result[result.length-1].hash;
           });
+      } else {
+        //if session does exist
+        req.session = session;
+        next();
       }
+    })
+    .catch((err) => {
+      console.log(err);
     });
 
 };
