@@ -18,7 +18,10 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 app.get('/',
   (req, res) => {
-    res.render('index');
+    Auth.createSession(req, res, () => {
+      res.render('index');
+    });
+    // res.render('index');
   });
 
 app.get('/create',
@@ -87,7 +90,11 @@ app.post('/signup', (req, res) => {
         //add new user
         models.Users.create(req.body)
           .then(() => {
-            res.redirect('/');
+            //add the user into the request,
+            Auth.createSession(req, res, () => {
+              //assign user ID to session;
+              res.redirect('/');
+            });
           });
       }
     })
@@ -97,8 +104,8 @@ app.post('/signup', (req, res) => {
 });
 app.post('/login', (req, res) => {
   //check if username exists
-    //compare password
-  models.Users.get({username: req.body.username})
+  //compare password
+  models.Users.get({ username: req.body.username })
     .then((userData) => {
       if (userData !== undefined) {
         return models.Users.compare(req.body.password, userData.password, userData.salt);
