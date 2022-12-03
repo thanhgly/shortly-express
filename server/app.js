@@ -106,7 +106,17 @@ app.post('/login', (req, res) => {
     })
     .then((isValid) => {
       if (isValid) {
-        res.redirect('/');
+        if (req.session === undefined) {
+          Auth.createSession(req, res, () => {
+            Auth.assignSession(req, res, () => {
+              res.redirect('/');
+            });
+          });
+        } else {
+          Auth.assignSession(req, res, () => {
+            res.redirect('/');
+          });
+        }
       } else {
         res.redirect('/login');
       }
