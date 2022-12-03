@@ -18,25 +18,77 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 app.get('/',
   (req, res) => {
-    Auth.createSession(req, res, () => {
-      res.render('index');
-    });
+    //if session exists, render index. if session doesnt exists, create one, and redirect to login;
+
+    //check if session exists;
+    if (req.session !== undefined) {
+      Auth.verifySession(req, res, (isLoggedIn) => {
+        if (isLoggedIn) {
+          res.render('index');
+        } else {
+          res.redirect('./login');
+        }
+      });
+    } else {
+      Auth.createSession(req, res, () => {
+        res.redirect('/login');
+      });
+    }
+
+    // Auth.verifySession(req, res, (isLoggedIn) => {
+    //   console.log(isLoggedIn);
+    //   if (isLoggedIn) {
+    //     res.render('index');
+    //   } else {
+    //     // res.redirect('/login');
+    //     console.log('this is running');
+    //     Auth.createSession(req, res, () => {
+    //       res.redirect('/login');
+    //     });
+    //   }
+    // });
   });
 
 app.get('/create',
   (req, res) => {
-    res.render('index');
+    if (req.session !== undefined) {
+      Auth.verifySession(req, res, (isLoggedIn) => {
+        if (isLoggedIn) {
+          res.render('index');
+        } else {
+          res.redirect('./login');
+        }
+      });
+    } else {
+      Auth.createSession(req, res, () => {
+        res.redirect('/login');
+      });
+    }
   });
 
 app.get('/links',
   (req, res, next) => {
-    models.Links.getAll()
-      .then(links => {
-        res.status(200).send(links);
-      })
-      .error(error => {
-        res.status(500).send(error);
+
+    if (req.session !== undefined) {
+      Auth.verifySession(req, res, (isLoggedIn) => {
+        if (isLoggedIn) {
+          models.Links.getAll()
+            .then(links => {
+              res.status(200).send(links);
+            })
+            .error(error => {
+              res.status(500).send(error);
+            });
+        } else {
+          res.redirect('./login');
+        }
       });
+    } else {
+      Auth.createSession(req, res, () => {
+        res.redirect('/login');
+      });
+    }
+
   });
 
 app.post('/links',
@@ -74,6 +126,11 @@ app.post('/links',
         res.status(200).send(link);
       });
   });
+
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
 
 /************************************************************/
 // Write your authentication routes here

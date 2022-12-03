@@ -77,7 +77,19 @@ module.exports.deleteSession = (req, res, next) => {
   });
 };
 
-module.exports.veritfySession = (req, res, next) => {
+module.exports.verifySession = (req, res, next) => {
 
+
+  parseCookies(req, res, () => {
+    var session = req.cookies.shortlyid;
+    console.log('SESSION', session);
+    models.Sessions.isLoggedIn(session)
+      .then((isLoggedIn) => {
+        console.log('boolean', isLoggedIn)
+        next(true);
+      });
+  });
+
+  next(true);
 };
 
