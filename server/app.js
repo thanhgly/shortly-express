@@ -21,10 +21,6 @@ app.get('/',
     Auth.createSession(req, res, () => {
       res.render('index');
     });
-<<<<<<< HEAD
-=======
-    // res.render('index');
->>>>>>> b0c41fdc406e7bca060936bddf7ad40be31e9b69
   });
 
 app.get('/create',
@@ -92,7 +88,6 @@ app.post('/signup', (req, res) => {
       } else {
         //add new user
         models.Users.create(req.body)
-<<<<<<< HEAD
           .then((user) => {
             if (req.session === undefined) {
               Auth.createSession(req, res, () => {
@@ -105,14 +100,6 @@ app.post('/signup', (req, res) => {
                 res.redirect('/');
               });
             }
-=======
-          .then(() => {
-            //add the user into the request,
-            Auth.createSession(req, res, () => {
-              //assign user ID to session;
-              res.redirect('/');
-            });
->>>>>>> b0c41fdc406e7bca060936bddf7ad40be31e9b69
           });
       }
     })
