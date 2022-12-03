@@ -18,7 +18,9 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 app.get('/',
   (req, res) => {
-    res.render('index');
+    Auth.createSession(req, res, () => {
+      res.render('index');
+    });
   });
 
 app.get('/create',
@@ -86,8 +88,18 @@ app.post('/signup', (req, res) => {
       } else {
         //add new user
         models.Users.create(req.body)
-          .then(() => {
-            res.redirect('/');
+          .then((user) => {
+            if (req.session === undefined) {
+              Auth.createSession(req, res, () => {
+                Auth.assignSession(req, res, () => {
+                  res.redirect('/');
+                });
+              });
+            } else {
+              Auth.assignSession(req, res, () => {
+                res.redirect('/');
+              });
+            }
           });
       }
     })
@@ -95,10 +107,11 @@ app.post('/signup', (req, res) => {
       throw err;
     });
 });
+
 app.post('/login', (req, res) => {
   //check if username exists
-    //compare password
-  models.Users.get({username: req.body.username})
+  //compare password
+  models.Users.get({ username: req.body.username })
     .then((userData) => {
       if (userData !== undefined) {
         return models.Users.compare(req.body.password, userData.password, userData.salt);
@@ -126,6 +139,11 @@ app.post('/login', (req, res) => {
     });
 });
 
+app.get('/logout', (req, res) => {
+  Auth.deleteSession(req, res, () => {
+    res.redirect('/');
+  });
+});
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
 // assume the route is a short code and try and handle it here.

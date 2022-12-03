@@ -5,11 +5,20 @@ const Promise = require('bluebird');
 module.exports.createSession = (req, res, next) => {
   //access parsed cookie on
   parseCookies(req, res, () => {
-    if (req.cookies === undefined) {
-      var session = {};
-    } else {
-      var session = req.cookies.shortlyid;
-    }
+    // console.log('are you undefined', req.cookies, 'qweqw', req.session);
+    // console.log('REQUEST', req);
+    // if (req.cookies === undefined) {
+    //   var session = {};
+    // } else {
+    //   var session = req.cookies.shortlyid;
+    // }
+
+    // if (req.cookies === undefined) {
+    //   req.cookies = {};
+    // }
+
+    var session = req.cookies.shortlyid;
+
     models.Sessions.get({ hash: session })
       .then((session) => {
         //if session doesn't exists
@@ -17,12 +26,11 @@ module.exports.createSession = (req, res, next) => {
           //create a session in the database
           models.Sessions.create()
             .then((header) => {
-              return models.Sessions.getAll();
+              return models.Sessions.get({ id: header.insertId });
             })
             .then((result) => {
-              var hashValue = result[result.length - 1].hash;
-              console.log('NEW SESSION', result[result.length - 1]);
-              res.cookie('shortlyid', hashValue);
+              req.session = result;
+              res.cookie('shortlyid', req.session.hash);
               next();
             });
         } else {
@@ -50,13 +58,21 @@ module.exports.assignSession = (req, res, next) => {
 
   models.Users.get({ username: req.body.username })
     .then((user) => {
-      console.log('USER', user);
-      console.log('REQ', req.session.hash, '    header', req.headers, ' cookie   ', req.cookie);
-      return models.Sessions.update({hash: req.session.hash, userId: null}, { hash: req.session.hash, userId: user.id });
+      return models.Sessions.update({ hash: req.session.hash }, { hash: req.session.hash, userId: user.id });
     })
     .then((result) => {
-      console.log('result', result);
       next();
     });
+};
 
+module.exports.deleteSession = (req, res, next) => {
+  res.clearCookie('shortlyid');
+  parseCookies(req, res, () => {
+    var session = req.cookies.shortlyid;
+    models.Sessions.delete({ hash: session })
+    .then(() => {
+      res.cookie('shortlyid', '');
+      next();
+    });
+  })
 };
