@@ -20,20 +20,22 @@ app.get('/',
   (req, res) => {
     //if session exists, render index. if session doesnt exists, create one, and redirect to login;
 
+    Auth.parseCookies(req, res, () => {
+      if (req.cookies.shortlyid !== undefined) {
+        Auth.verifySession(req, res, (isLoggedIn) => {
+          if (isLoggedIn) {
+            res.render('index');
+          } else {
+            res.redirect('./login');
+          }
+        });
+      } else {
+        Auth.createSession(req, res, () => {
+          res.redirect('/login');
+        });
+      }
+    });
     //check if session exists;
-    if (req.session !== undefined) {
-      Auth.verifySession(req, res, (isLoggedIn) => {
-        if (isLoggedIn) {
-          res.render('index');
-        } else {
-          res.redirect('./login');
-        }
-      });
-    } else {
-      Auth.createSession(req, res, () => {
-        res.redirect('/login');
-      });
-    }
 
     // Auth.verifySession(req, res, (isLoggedIn) => {
     //   console.log(isLoggedIn);
@@ -69,25 +71,19 @@ app.get('/create',
 app.get('/links',
   (req, res, next) => {
 
-    if (req.session !== undefined) {
-      Auth.verifySession(req, res, (isLoggedIn) => {
-        if (isLoggedIn) {
-          models.Links.getAll()
-            .then(links => {
-              res.status(200).send(links);
-            })
-            .error(error => {
-              res.status(500).send(error);
-            });
-        } else {
-          res.redirect('./login');
-        }
-      });
-    } else {
-      Auth.createSession(req, res, () => {
-        res.redirect('/login');
-      });
-    }
+    Auth.verifySession(req, res, (isLoggedIn) => {
+      if (isLoggedIn) {
+        models.Links.getAll()
+          .then(links => {
+            res.status(200).send(links);
+          })
+          .error(error => {
+            res.status(500).send(error);
+          });
+      } else {
+        res.redirect('./login');
+      }
+    });
 
   });
 
@@ -129,6 +125,10 @@ app.post('/links',
 
 app.get('/login', (req, res) => {
   res.render('login');
+});
+
+app.get('/signup', (req, res) => {
+  res.render('signup');
 });
 
 
@@ -227,6 +227,7 @@ app.get('/:code', (req, res, next) => {
       res.status(500).send(error);
     })
     .catch(() => {
+      //redirect to home page
       res.redirect('/');
     });
 });

@@ -82,14 +82,20 @@ module.exports.verifySession = (req, res, next) => {
 
   parseCookies(req, res, () => {
     var session = req.cookies.shortlyid;
-    console.log('SESSION', session);
-    models.Sessions.isLoggedIn(session)
-      .then((isLoggedIn) => {
-        console.log('boolean', isLoggedIn)
-        next(true);
+    models.Sessions.get({ hash: session })
+      .then((session) => {
+        if (session === undefined) {
+          next(false);
+        } else {
+          next(models.Sessions.isLoggedIn(session));
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        next(false);
       });
   });
-
-  next(true);
 };
+
+module.exports.parseCookies = parseCookies;
 
